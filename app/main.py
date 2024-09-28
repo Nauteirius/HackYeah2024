@@ -19,7 +19,13 @@ def main():
         st.json(file_details)
 
         audio_video = split_data.split(uploaded_file)
-        # print(speech_to_text.annotate(audio_video))
+        text, words = speech_to_text.annotate(audio_video)
+
+        print("Full Text:\n", text)
+
+        print("Individual Words:")
+        for word in words:
+            print(word)
 
 
 if __name__ == "__main__":

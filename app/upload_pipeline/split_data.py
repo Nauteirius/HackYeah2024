@@ -16,21 +16,21 @@ class AudioVideo(NamedTuple):
 
 def split(video_bytes: io.BytesIO) -> AudioVideo:
 
-    with NamedTemporaryFile(mode="w+b") as tmp_input:
+    with NamedTemporaryFile(mode='w+b') as tmp_input:
         tmp_input.write(video_bytes.read())
 
         file_name = tmp_input.file.name
 
         probe = ffmpeg.probe(file_name)
-        probe_stream = next(s for s in probe["streams"] if s["codec_type"] == "video")
+        probe_stream = next(s for s in probe['streams'] if s['codec_type'] == 'video')
         # TODO: somehow propagate errors if needed
-        fps = int(probe_stream["avg_frame_rate"].split("/")[0])
-        width = int(probe_stream["width"])
-        height = int(probe_stream["height"])
+        fps = int(probe_stream['avg_frame_rate'].split('/')[0])
+        width = int(probe_stream['width'])
+        height = int(probe_stream['height'])
 
         out, _ = (
             ffmpeg.input(file_name)
-            .video.output("pipe:", format="rawvideo", pix_fmt="bgr24")
+            .video.output('pipe:', format='rawvideo', pix_fmt='bgr24')
             .run(capture_stdout=True)
         )
         frames_4d = np.frombuffer(out, np.uint8).reshape([-1, height, width, 3])
@@ -45,6 +45,7 @@ def split(video_bytes: io.BytesIO) -> AudioVideo:
         )
 
         mp3_bytes = io.BytesIO()
+        mp3_bytes.name = file_name + '.mp3'
         mp3_bytes.write(out)
         mp3_bytes.seek(0)
 
