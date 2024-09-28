@@ -3,16 +3,29 @@ import argparse
 import pickle
 import numpy as np
 from deepface import DeepFace  # Import the DeepFace emotion recognition library
+import mediapipe as mp  # Import Mediapipe for hand detection
 import json  # Import the json module for structured output
 fps=25
 # Load the pre-trained Haar Cascade face detector
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+# Initialize Mediapipe hand detector
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5)
 
 # Function to detect faces in a frame
 def detect_face(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert frame to grayscale
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
     return faces  # Return list of face coordinates if any found
+
+
+# Function to detect hands in a frame using Mediapipe
+def detect_hand(frame):
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB for Mediapipe
+    results = hands.process(frame_rgb)
+    if results.multi_hand_landmarks:
+        return True  # Return True if at least one hand is detected
+    return False  # Return False if no hands are detected
 
 # Function to detect emotions in a frame using DeepFace
 def detect_emotion(frame):
@@ -50,6 +63,7 @@ def process_video(video_path):
         second = int(timestamp)  # Get the current second
 
         faces = detect_face(frame)  # Detect faces in the current frame
+        hand_detected = detect_hand(frame)  # Detect hand in the current frame
 
         # Initialize results for the current second if not already done
         if second not in results:
@@ -61,7 +75,7 @@ def process_video(video_path):
                     "total_frames": 0  # Total frames counted for this second
                 },
                 "body": {
-                    "gesture": "unknown"  # Placeholder for body gesture detection
+                    "gesture_count": 0 # Placeholder for body gesture detection
                 },
                 "environment": {
                     "background_people_count": 0,  # Counter for frames with more than one face
@@ -84,7 +98,9 @@ def process_video(video_path):
             # If more than one face is detected, increment background people count
             if len(faces) > 1:
                 results[second]["environment"]["background_people_count"] += 1
-
+                # If hand is detected, increment gesture count
+        if hand_detected:
+            results[second]["body"]["gesture_count"] += 1
         frame_number += 1
 
     # After processing all frames, determine visibility and background presence for each second
@@ -98,6 +114,9 @@ def process_video(video_path):
 
         # Determine if background people were present in the majority of frames
         data["environment"]["background_people"] = data["environment"]["background_people_count"] > (data["face"]["total_frames"] / 2)
+
+        # Determine if gestures were present (hand detected in majority of frames)
+        data["body"]["gesture"] = data["body"]["gesture_count"] > (data["face"]["total_frames"] / 2)
 
     # Convert results to the desired JSON format
     json_output = []
@@ -132,6 +151,7 @@ def process_images(image_list):
         second = idx // fps  # Assuming fps is constant and each image corresponds to a frame
 
         faces = detect_face(image)  # Detect faces in the image
+        hand_detected = detect_hand(image)  # Detect hand in the image
 
         # Initialize results for the current second if not already done
         if second not in results:
@@ -143,7 +163,7 @@ def process_images(image_list):
                     "total_frames": 0  # Total images counted for this second
                 },
                 "body": {
-                    "gesture": "unknown"  # Placeholder for body gesture detection
+                    "gesture_count": 0 # Placeholder for body gesture detection
                 },
                 "environment": {
                     "background_people_count": 0,  # Counter for images with more than one face
@@ -166,7 +186,8 @@ def process_images(image_list):
             # If more than one face is detected, increment background people count
             if len(faces) > 1:
                 results[second]["environment"]["background_people_count"] += 1
-
+        if hand_detected:
+            results[second]["body"]["gesture_count"] += 1
     # After processing all images, determine visibility and background presence for each second
     for second, data in results.items():
         # Determine if faces were visible in the majority of images
@@ -178,6 +199,9 @@ def process_images(image_list):
 
         # Determine if background people were present in the majority of images
         data["environment"]["background_people"] = data["environment"]["background_people_count"] > (data["face"]["total_frames"] / 2)
+
+        # Determine if gestures were present (hand detected in majority of frames)
+        data["body"]["gesture"] = data["body"]["gesture_count"] > (data["face"]["total_frames"] / 2)
 
     # Convert results to the desired JSON format
     json_output = []
