@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from typing import NamedTuple
 
@@ -15,20 +14,26 @@ class TextSlice(NamedTuple):
     time_end_s: float
 
 
-def annotate(audio_video: AudioVideo) -> list[TextSlice]:
+class AnnotatedText(NamedTuple):
+    text: str
+    words: list[TextSlice]
+
+
+def annotate(audio_video: AudioVideo) -> AnnotatedText:
 
     client = OpenAI(api_key=API_KEY)
 
-    transcript = json.load(
-        client.audio.transcriptions.create(
-            file=audio_video.audio,
-            model='whisper-1',
-            language='pl',
-            response_format='verbose_json',
-            timestamp_granularities=['word'],
-        )
+    transcript = client.audio.transcriptions.create(
+        file=audio_video.audio,
+        model="whisper-1",
+        language="pl",
+        response_format="verbose_json",
+        timestamp_granularities=["word"],
     )
 
-    print(transcript)
+    words = [
+        TextSlice(w.word, time_start_s=w.start, time_end_s=w.end)
+        for w in transcript.words
+    ]
 
-    return []
+    return AnnotatedText(text=transcript.text, words=words)
