@@ -80,15 +80,22 @@ def detect_non_polish_and_slang(tokens):
     '''Detect potential slang, jargon, or non-Polish words'''
     polish_alphabet = set('aąbcćdeęfghijklłmnńoóprsśtuwyzźż')
     english_words = set(words.words())
+    punctuation = set('.,;:!?()[]{}"-\'')
     
     non_polish = []
     for token in tokens:
-        if set(token.lower()) - polish_alphabet:
+        if set(token) <= punctuation:
+            continue
+        
+        cleaned_token = ''.join(char for char in token if char not in punctuation)
+        if not cleaned_token:
+            continue
+        
+        if set(cleaned_token.lower()) - polish_alphabet:
             non_polish.append(token)
-        elif token.lower() in english_words:
+        elif cleaned_token.lower() in english_words:
             non_polish.append(token)
-        #string of polish slang words
-        elif re.match(r'\b(spoko|git|lol|xd|ziomek|siema|masakra|sztos|kumpel|luzik|ziomal|nara|spina|mega|kozacko|klawo|ogarnij|spadaj|kapiszon|chill|czaisz|bekowy|mordo|wporzo|czill|sztosik|epicki|załamka|japa|kminisz|jazda|czad|lajk|fejm|ziomuś|nara|skumać|fajowo|piona|masakryczny|beka|czaderski|ziom)\b', token.lower()):
+        elif re.match(r'\b(spoko|git|lol|xd|ziomek|siema|masakra|sztos|kumpel|luzik|ziomal|nara|spina|mega|kozacko|klawo|ogarnij|spadaj|kapiszon|chill|czaisz|bekowy|mordo|wporzo|czill|sztosik|epicki|załamka|japa|kminisz|jazda|czad|lajk|fejm|ziomuś|nara|skumać|fajowo|piona|masakryczny|beka|czaderski|ziom)\b', cleaned_token.lower()):
             non_polish.append(token)
     
     return non_polish
