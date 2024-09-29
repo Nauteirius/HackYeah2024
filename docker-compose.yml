@@ -1,0 +1,41 @@
+services:
+  pgrader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./app:/app/app
+      - nltk_data:/root/nltk_data
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    command: >
+      sh -c " if [ ! -d /root/nltk_data/tokenizers/punkt ]; then
+          python -m nltk.downloader punkt stopwords words
+        fi &&
+        python -m streamlit run ./app/main.py --server.port=8501
+      "
+    ports:
+    - 8501:8501
+    nginx:
+      image: nginx:alpine
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        - ./data/certbot/conf:/etc/letsencrypt
+        - ./data/certbot/www:/var/www/certbot
+      depends_on:
+        - pgrader
+    certbot:
+      image: certbot/certbot
+      volumes:
+        - ./data/certbot/conf:/etc/letsencrypt
+        - ./data/certbot/www:/var/www/certbot
+      command: >-
+            certonly --webroot -w /var/www/certbot
+            --email alex.zeising@gmail.com -d bobr.ovh --agree-tos
+            --force-renewal
+
+volumes:
+  nltk_data:

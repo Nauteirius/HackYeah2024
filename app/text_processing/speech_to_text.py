@@ -1,11 +1,7 @@
-from pathlib import Path
 from typing import NamedTuple
 
-from openai import OpenAI
-
+import app.text_processing.openai_client as openai_client
 from app.upload_pipeline.split_data import AudioVideo
-
-API_KEY = Path('./app/keys').read_text()
 
 
 class TextSlice(NamedTuple):
@@ -20,10 +16,7 @@ class AnnotatedText(NamedTuple):
 
 
 def annotate(audio_video: AudioVideo) -> AnnotatedText:
-
-    client = OpenAI(api_key=API_KEY)
-
-    transcript = client.audio.transcriptions.create(
+    transcript = openai_client.instance.audio.transcriptions.create(
         file=audio_video.audio,
         model="whisper-1",
         language="pl",

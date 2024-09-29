@@ -29,4 +29,5 @@ archive.zip
 # macOS
 .DS_Store
 .venv
-app/keys
+
+.env
