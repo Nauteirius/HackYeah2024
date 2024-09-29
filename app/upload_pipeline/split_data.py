@@ -1,4 +1,5 @@
 import io
+import os
 from typing import NamedTuple
 from tempfile import NamedTemporaryFile
 
@@ -16,7 +17,10 @@ class AudioVideo(NamedTuple):
 
 def split(video_bytes: io.BytesIO) -> AudioVideo:
 
-    with NamedTemporaryFile(mode='w+b') as tmp_input:
+    isWindows = os.name == 'nt'
+    # workaround JUST for windows NT :)
+
+    with NamedTemporaryFile(mode='w+b', delete=(not isWindows)) as tmp_input:
         tmp_input.write(video_bytes.read())
 
         file_name = tmp_input.file.name
@@ -48,5 +52,9 @@ def split(video_bytes: io.BytesIO) -> AudioVideo:
         mp3_bytes.name = file_name + '.mp3'
         mp3_bytes.write(out)
         mp3_bytes.seek(0)
+    
+    # workaround JUST for windows NT :)
+    if isWindows and file_name:
+        os.remove(file_name)
 
     return AudioVideo(fps, width, height, frames, mp3_bytes)

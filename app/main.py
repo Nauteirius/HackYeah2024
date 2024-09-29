@@ -2,6 +2,8 @@ import streamlit as st
 
 import app.upload_pipeline.split_data as split_data
 import app.text_processing.speech_to_text as speech_to_text
+from app.text_processing.llm_analyzer import llm_output
+from app.text_processing.processor import text_analyzer
 
 
 def main():
@@ -20,6 +22,10 @@ def main():
 
         audio_video = split_data.split(uploaded_file)
         text, words = speech_to_text.annotate(audio_video)
+
+        # text processors
+        # llm_output(text)
+        # text_analyzer(text)
 
         print("Full Text:\n", text)
 
