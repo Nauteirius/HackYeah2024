@@ -1,4 +1,5 @@
 import streamlit as st
+import json
 
 import app.upload_pipeline.split_data as split_data
 import app.text_processing.speech_to_text as speech_to_text
@@ -34,7 +35,7 @@ def main():
 
         st.text(text)
         # Create two tabs
-        tab1, tab2 = st.tabs(["Tabela wyników", "Pytania i Tagi"])
+        tab1, tab2, tab3 = st.tabs(["Tabela wyników", "Pytania i Tagi", "Analiza wydarzeń"])
 
         # Tab 1: Tabela wyników
         with tab1:
@@ -43,8 +44,7 @@ def main():
                 "Ilośc słów": len(words),
                 "Unikalne słowe": len(set(words)),
                 "Średnia przerwa między słowami": average_break,
-                "Najdłuższa przerwa między słowami": longest_break,
-                
+                "Najdłuższa przerwa między słowami": longest_break, 
             }
             st.table(stats)
 
@@ -58,18 +58,32 @@ def main():
             for i, tag in enumerate(tags, 1):
                 st.write(f"{i}. {tag}")
 
-
-        print("Individual Words:")
         video_analyzer_output = video_analyzer.process_images(audio_video.frames,audio_video.fps)
-        st.json(video_analyzer_output)
-        for word in words:
-            print(word)
+        
+        with tab3:
+            st.subheader("Analiza wideo")
+            
+            # Filter video_analyzer_output based on criteria
+            filtered_output = []
+            for frame in video_analyzer_output:
+                if (not frame['face']['visible'] or 
+                    frame['body']['gesture'] or 
+                    frame['environment']['background_people']):
+                    filtered_output.append(frame)
+            
+            # Add longest break information
+            filtered_output.append({
+                "timestamp": longest_break_start,
+                "event": "Najdłuższa przerwa między słowami",
+                "duration": longest_break
+            })
+            
+            # Sort the filtered output by timestamp
+            filtered_output.sort(key=lambda x: x['timestamp'])
+            
+            # Display the filtered and formatted JSON
+            st.json(json.dumps(filtered_output, indent=2, ensure_ascii=False))
 
-        print("Summary of the text:")
-        video_analyzer_output = video_analyzer.process_images(audio_video.frames, audio_video.fps)
-        st.json(video_analyzer_output)
-        for word in words:
-            print(word)
 
 
 if __name__ == "__main__":
