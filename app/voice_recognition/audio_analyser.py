@@ -33,26 +33,10 @@ def analyze_audio(audio_bytes):
     silence_intervals = librosa.effects.split(y, top_db=20)  # Detect silent segments
     pause_time = np.sum(silence_intervals[:, 1] - silence_intervals[:, 0]) / sr  # in seconds
 
-    frame_length = int(sr * 0.05)  # 50ms frame
-    hop_length = int(sr * 0.025)  # 25ms hop
-    rms_energy = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)[0]
-    
-    noise_threshold = np.mean(rms_energy) + np.std(rms_energy)
-    noise_frames = np.where(rms_energy > noise_threshold)[0]
-    
-    noise_timestamps = []
-    if len(noise_frames) > 0:
-        noise_segments = librosa.util.frame(noise_frames, frame_length=2, hop_length=1)
-        for segment in noise_segments:
-            start_time = librosa.frames_to_time(segment[0], sr=sr, hop_length=hop_length)
-            end_time = librosa.frames_to_time(segment[-1], sr=sr, hop_length=hop_length)
-            noise_timestamps.append((start_time, end_time))
-
     return {
         'pace': pace,
         'loudness': loudness,
-        'pause_time': pause_time,
-        'noise_timestamps': noise_timestamps
+        'pause_time': pause_time
     }
 
 # Define thresholds for loudness
