@@ -106,6 +106,51 @@ def detect_non_polish_and_slang(tokens):
     
     return non_polish
 
+def get_repeated_words(tokens):
+    '''Get words that occur more than once in the text'''
+    word_counts = Counter(token.lower() for token in tokens if token.isalnum())
+    repeated_words = {word: count for word, count in word_counts.items() if count > 1}
+    return repeated_words
+
+def detect_pause_words(tokens):
+    '''Detect pause words or filler words in the text'''
+    pause_words = set(['hm', 'em', 'uh', 'um', 'eh', 'mm', 'hmm', 'erm', 'eee', 'yyyy'])
+    detected_pause_words = [token.lower() for token in tokens if token.lower() in pause_words]
+    return detected_pause_words
+
+def analyze_word_breaks(words):
+    """
+    Analyze breaks between words in a list of TextSlice objects.
+    
+    Args:
+    words (list): A list of TextSlice objects with word, time_start_s, and time_end_s attributes.
+    
+    Returns:
+    tuple: (average_break, longest_break, longest_break_start)
+        - average_break (float): The average break duration between words in seconds.
+        - longest_break (float): The duration of the longest break between words in seconds.
+        - longest_break_start (float): The start time of the longest break in seconds.
+    """
+    if len(words) < 2:
+        return 0, 0, None
+
+    breaks = []
+    longest_break = 0
+    longest_break_start = None
+
+    for i in range(1, len(words)):
+        break_start = words[i-1].time_end_s
+        break_duration = words[i].time_start_s - break_start
+        breaks.append(break_duration)
+        
+        if break_duration > longest_break:
+            longest_break = break_duration
+            longest_break_start = break_start
+
+    average_break = sum(breaks) / len(breaks)
+
+    return average_break, longest_break, longest_break_start
+
 def text_analyzer(text):
     '''Main function to process text and write results to output file'''
 
@@ -123,6 +168,8 @@ def text_analyzer(text):
     pos_count = count_pos(doc)
     gfi_value, reading_level, complex_words = gunning_fog_index(tokens, doc)
     non_polish_words = detect_non_polish_and_slang(tokens)
+    pause_words = detect_pause_words(tokens)
+    repeated_words = get_repeated_words(tokens)
 
     # Prepare the result dictionary
     results = {
@@ -133,7 +180,9 @@ def text_analyzer(text):
         "POS Count": pos_count,
         "Gunning Fog Index": gfi_value,
         "Reading Level": reading_level,
-        "Non-Polish/Slang Words": non_polish_words
+        "Non-Polish/Slang Words": non_polish_words,
+        "Pause Words": pause_words,
+        "Repeated Words": repeated_words
     }
 
     return results

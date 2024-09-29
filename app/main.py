@@ -3,7 +3,7 @@ import streamlit as st
 import app.upload_pipeline.split_data as split_data
 import app.text_processing.speech_to_text as speech_to_text
 from app.text_processing.llm_analyzer import llm_output
-from app.text_processing.processor import text_analyzer
+from app.text_processing.processor import text_analyzer, analyze_word_breaks
 import app.face_detection.video_analyzer as video_analyzer
 from app.voice_recognition.audio_analyser import analyze_audio
 
@@ -26,6 +26,7 @@ def main():
         false_words, questions, tags = llm_output(text)
         text_json = text_analyzer(text)
         st.json(text_json)
+        average_break, longest_break, longest_break_start = analyze_word_breaks(words)
 
         # audio processors
         audio_json = analyze_audio(audio_video.audio)
@@ -39,9 +40,10 @@ def main():
         with tab1:
             st.subheader("Tabela wyników")
             stats = {
-                "Total Words": len(words),
-                "Unique Words": len(set(words)),
-                "False Words": len(false_words),
+                "Ilośc słów": len(words),
+                "Unikalne słowe": len(set(words)),
+                "Średnia przerwa między słowami": average_break,
+                "Najdłuższa przerwa między słowami": longest_break,
                 
             }
             st.table(stats)
