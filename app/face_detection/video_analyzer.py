@@ -256,14 +256,12 @@ def process_images(image_list,fps):
 
     # Convert results to the desired JSON format
     json_output = []
-    emotion_keys = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral']
     for second, data in results.items():
-        emotion_dict = {key: value for key, value in zip(emotion_keys, data["face"]["emotion"].tolist())}
         json_output.append({
             "timestamp": data["timestamp"],
             "face": {
                 "visible": data["face"].get("visible", False),  # Use the computed visibility
-                "emotion": emotion_dict,
+                "emotion": data["face"]["emotion"].tolist(),
                 "looking_at_camera": data["face"]["looking_at_camera_count"] > (data["face"]["total_frames"] / 2),  # Include looking_at_camera in output
             },
             "body": {

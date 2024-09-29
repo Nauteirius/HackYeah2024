@@ -72,15 +72,15 @@ def gunning_fog_index(tokens, doc):
     gfi = 0.4 * ((total_words / total_sentences) + (100 * (complex_word_count / total_words)))
 
     if gfi < 6:
-        reading_level = "5th Grade and below"
+        reading_level = "5 klasa lub niżej"
     elif gfi < 8:
-        reading_level = "6th to 8th Grade"
+        reading_level = "6 do 8 klasy"
     elif gfi < 10:
-        reading_level = "9th to 10th Grade"
+        reading_level = "9 do 10 klasy"
     elif gfi < 12:
-        reading_level = "11th to 12th Grade"
+        reading_level = "11 do 12 klasy"
     else:
-        reading_level = "College Level and above" #maybe this indicates jargon?
+        reading_level = "poziom akademicki" #maybe this indicates jargon?
 
     return gfi, reading_level, complex_word_list
 
@@ -204,17 +204,17 @@ def text_analyzer(text):
 
     # Prepare the result dictionary
     results = {
-        "Token Count": token_count,
-        "Sentence Count": sentence_count,
-        "Sentence Lengths": sentence_lengths,
-        "Complex Words": complex_words,
-        "POS Count": pos_count,
-        "Gunning Fog Index": gfi_value,
-        "Reading Level": reading_level,
-        "Non-Polish/Slang Words": non_polish_words,
-        "Pause Words": pause_words,
-        "Repeated Words": repeated_words,
-        "Sentiment Analysis": hate_speech_detection
+        "Ilośc słów": token_count,
+        "Ilośc zdań": sentence_count,
+        "Długość zdań": sentence_lengths,
+        "Trudne słowa": complex_words,
+        "Części mowy": pos_count,
+        "Indeks Gunning Fog": gfi_value,
+        "Poziom słuchacza": reading_level,
+        "Słowa slangowe/nie Polskie": non_polish_words,
+        "Słowa przerwy": pause_words,
+        "Słowa powtórzone": repeated_words,
+        "Analiza sentymentu": hate_speech_detection
     }
 
     return results
