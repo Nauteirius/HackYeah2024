@@ -13,9 +13,12 @@ def estimate_words_count(y, sr):
     estimated_word_count = total_duration / average_word_duration
     return int(estimated_word_count)
 
-def analyze_audio(file_path):
-    # Load audio file
-    y, sr = librosa.load(file_path)
+def analyze_audio(audio_bytes):
+    # Reset the BytesIO object to the beginning
+    audio_bytes.seek(0)
+    
+    # Load audio from BytesIO object
+    y, sr = librosa.load(audio_bytes, sr=None)
 
     # Calculate pace of speaking
     total_duration = librosa.get_duration(y=y, sr=sr)
@@ -32,7 +35,6 @@ def analyze_audio(file_path):
     interruptions = len(silence_intervals) - 1  # Number of interruptions
 
     return {
-        'file_path': file_path,
         'pace': pace,
         'loudness': loudness,
         'pause_time': pause_time,

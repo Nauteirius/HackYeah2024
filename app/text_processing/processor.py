@@ -138,4 +138,4 @@ def text_analyzer(text):
         "Non-Polish/Slang Words": non_polish_words
     }
 
-    print(results)
+    return results
