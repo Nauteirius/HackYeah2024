@@ -12,10 +12,10 @@ def are_similar(text1, text2, threshold=0.8):
     """Returns True if text1 and text2 are similar above the given threshold."""
     return SequenceMatcher(None, text1, text2).ratio() > threshold
 
-def extract_subtitles_from_frames(pkl_path, frame_skip=10, similarity_threshold=0.8):
+def extract_subtitles_from_frames(frames, frame_skip=10, similarity_threshold=0.8):
     # Step 1: Load the .pkl file containing the list of numpy arrays (frames)
-    with open(pkl_path, 'rb') as file:
-        frames = pickle.load(file)  # This assumes frames are stored as a list of numpy arrays
+    #with open(pkl_path, 'rb') as file:
+    #    frames = pickle.load(file)  # This assumes frames are stored as a list of numpy arrays
     
     subtitles = []
     previous_text = None  # Track the previous subtitle text

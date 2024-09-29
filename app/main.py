@@ -25,7 +25,6 @@ def main():
         text, words = speech_to_text.annotate(audio_video)
         subtitle = subtitles_extractor.extract_subtitles_from_frames(audio_video.frames)
         lev_similarity, cos_similarity = text_comparator.compare_subtitles_and_transcriptions(subtitle,text)
-        print("lev_similarity: ",lev_similarity, " cos_similarity: ",cos_similarity)
 
         # text processors
         false_words, questions, tags, text_summary = llm_output(text)
@@ -46,9 +45,16 @@ def main():
             st.subheader("Tabela wyników")
             stats = {
                 "Ilośc słów": len(words),
-                "Unikalne słowe": len(set(words)),
                 "Średnia przerwa między słowami": average_break,
                 "Najdłuższa przerwa między słowami": longest_break, 
+                "Analiza sentymentu": text_json.hate_speech_detection,
+                "Indeks Gunning Fog": text_json.gfi_value,
+                "Poziom słuchacza": text_json.reading_level,
+                "Prędkośc (WPM)": audio_json.pace,
+                "Głośność": audio_json.loudness,
+                "Całkowity czas przerw": audio_json.pause_time,
+                "Podobieństwo wypowiedzi i napisów (Lev)": lev_similarity,
+                "Podobieństwo wypowiedzi i napisów (Cos)": cos_similarity
             }
             st.table(stats)
 
@@ -61,6 +67,9 @@ def main():
             st.subheader("Tagi")
             for i, tag in enumerate(tags, 1):
                 st.write(f"{i}. {tag}")
+            
+            st.subheader("Podsumowanie")
+            st.write(text_summary)
 
         video_analyzer_output = video_analyzer.process_images(audio_video.frames,audio_video.fps)
         
@@ -87,6 +96,7 @@ def main():
             
             # Display the filtered and formatted JSON
             st.json(json.dumps(filtered_output, indent=2, ensure_ascii=False))
+        
 
 
 
