@@ -1,11 +1,11 @@
 import pickle
 import numpy as np
-import pytesseract
 import cv2
 import argparse
-pytesseract.pytesseract.tesseract_cmd = r'C:\Users\yamin\AppData\Local\Tesseract-OCR\tesseract.exe'
-# Ensure that Tesseract is correctly installed and available in PATH or specify its path
-# pytesseract.pytesseract.tesseract_cmd = r'path_to_your_tesseract.exe'  # Uncomment and set the path if necessary
+import easyocr  # EasyOCR library
+
+# Initialize the EasyOCR Reader
+reader = easyocr.Reader(['en'], gpu=False)  # 'en' for English, add other languages if needed
 
 def extract_subtitles_from_frames(pkl_path):
     # Step 1: Load the .pkl file containing the list of numpy arrays (frames)
@@ -13,20 +13,27 @@ def extract_subtitles_from_frames(pkl_path):
         frames = pickle.load(file)  # This assumes frames are stored as a list of numpy arrays
     
     subtitles = []
+    previous_text = None  # Track the previous subtitle text
     
     # Step 2: Process each frame to extract text (OCR)
     for i, frame in enumerate(frames):
-        # Convert the numpy array (frame) from BGR (OpenCV default) to RGB (required for pytesseract)
+        # Convert the numpy array (frame) from BGR (OpenCV default) to RGB (required for EasyOCR)
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         
-        # Step 3: Use pytesseract to extract text from the image
-        text = pytesseract.image_to_string(img_rgb)
+        # Step 3: Use EasyOCR to extract text from the image
+        results = reader.readtext(img_rgb, detail=0)  # detail=0 gives just the text as a list
+        text = " ".join(results).strip()  # Join the text pieces into one string
         
-        # Add the extracted text to the subtitle list (or empty string if no text)
-        subtitles.append(text.strip())
+        # Step 4: Skip empty strings and consecutive duplicate subtitles
+        if text and text != previous_text:
+            subtitles.append(text)
+            previous_text = text  # Update the previous text to the current one
     
-    # Step 4: Return the list of subtitles
-    return subtitles
+    # Step 5: Join all unique subtitles into one block of text
+    combined_text = " ".join(subtitles)
+    
+    # Step 6: Return the combined text
+    return combined_text
 
 def main():
     # Step 1: Set up argument parsing
@@ -37,11 +44,10 @@ def main():
     args = parser.parse_args()
     
     # Step 3: Extract subtitles
-    subtitles = extract_subtitles_from_frames(args.pkl_path)
+    combined_subtitles = extract_subtitles_from_frames(args.pkl_path)
     
-    # Step 4: Print the subtitles
-    for i, subtitle in enumerate(subtitles):
-        print(f"Frame {i+1}: {subtitle}")
-
+    # Step 4: Print the combined subtitles
+    print("Extracted Subtitles:\n", combined_subtitles)
+    return combined_subtitles
 if __name__ == '__main__':
     main()
