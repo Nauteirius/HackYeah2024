@@ -22,7 +22,7 @@ def main():
 
         audio_video = split_data.split(uploaded_file)
         text, words = speech_to_text.annotate(audio_video)
-        subtitle = subtitles_extractor(audio_video.frames)
+        subtitle = subtitles_extractor.extract_subtitles_from_frames(audio_video.frames)
         lev_similarity, cos_similarity = text_comparator.compare_subtitles_and_transcriptions(subtitle,text)
         print("lev_similarity: ",lev_similarity, " cos_similarity: ",cos_similarity)
 
