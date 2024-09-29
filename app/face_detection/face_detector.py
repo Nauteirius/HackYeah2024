@@ -2,75 +2,110 @@ import cv2
 import argparse
 import pickle
 import numpy as np
-from deepface import DeepFace  # Import the DeepFace emotion recognition library
+from deepface import DeepFace
 
-# Load the pre-trained Haar Cascade face detector
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-# Function to detect faces in a frame
 def detect_face(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert frame to grayscale
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    return faces  # Return list of face coordinates if any found
+    """
+    Wykrywa twarze na podanym obrazie.
 
-# Function to detect emotions in a frame using DeepFace
+    Args:
+        frame (numpy.ndarray): Obraz w formacie BGR, na którym mają być wykrywane twarze.
+
+    Returns:
+        list: Lista prostokątów (x, y, szerokość, wysokość) reprezentujących wykryte twarze.
+    """
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    return faces
+
 def detect_emotion(frame):
+    """
+    Wykrywa emocje na podanym obrazie twarzy.
+
+    Args:
+        frame (numpy.ndarray): Obraz w formacie BGR, na którym mają być wykrywane emocje.
+
+    Returns:
+        tuple: Krotka zawierająca:
+            - dominant_emotion (str): Dominująca emocja wykryta na obrazie.
+            - emotion_scores (dict): Słownik z wynikami dla wszystkich wykrytych emocji.
+
+    Przykład:
+        >>> dominant_emotion, emotion_scores = detect_emotion(frame)
+        >>> print(dominant_emotion)
+        'happy'
+        >>> print(emotion_scores)
+        {'angry': 0.01, 'disgust': 0.0, 'fear': 0.02, 'happy': 0.95, 'sad': 0.01, 'surprise': 0.01, 'neutral': 0.0}
+    """
     try:
-        # Analyze the face and return emotions
         analysis = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
-        
-        # Since analyze returns a list, we take the first result
-        dominant_emotion = analysis[0]['dominant_emotion']  # Correctly access the dominant emotion
-        emotion_scores = analysis[0]['emotion']  # Get the full emotion scores
-        
-        return dominant_emotion, emotion_scores  # Return both dominant emotion and scores
+        dominant_emotion = analysis[0]['dominant_emotion']
+        emotion_scores = analysis[0]['emotion']
+        return dominant_emotion, emotion_scores
     except Exception as e:
         print(f"Error in emotion detection: {e}")
         return None, None
 
-# Function to process video, detect faces and recognize emotions
 def process_video(video_path):
-    cap = cv2.VideoCapture(video_path)
+    """
+    Przetwarza plik wideo, wykrywając twarze i emocje w każdej klatce.
 
+    Args:
+        video_path (str): Ścieżka do pliku wideo.
+
+    Returns:
+        None
+    """
+    cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print(f"Error: Could not open video file {video_path}")
         return
-
     frame_number = 0
     fps = cap.get(cv2.CAP_PROP_FPS)
-    
-    # Loop through video frames
     while cap.isOpened():
-        ret, frame = cap.read()  # Read a frame
+        ret, frame = cap.read()
         if not ret:
             break
-        
-        faces = detect_face(frame)  # Detect faces in the current frame
-        
-        if len(faces) > 0:  # If faces are detected
-            # Calculate timestamp in seconds for the current frame
+        faces = detect_face(frame)
+        if len(faces) > 0:
             timestamp = frame_number / fps
-
-            # Detect emotion in the frame
             dominant_emotion, emotion_scores = detect_emotion(frame)
-            
-            # If an emotion is detected, output the information
             if dominant_emotion and emotion_scores:
                 print(f"Frame {frame_number}, Timestamp: {timestamp:.2f} seconds, "
                       f"Dominant Emotion: {dominant_emotion}, Emotion Scores: {emotion_scores}")
-        
         frame_number += 1
-
-    # Release the video capture
     cap.release()
 
-# Function to process a list of images and detect faces and emotions
 def process_images(image_list):
+    """
+    Przetwarza listę obrazów, wykrywając twarze i emocje na każdym obrazie.
+
+    Args:
+        image_list (list): Lista obrazów w formacie numpy.ndarray, na których mają być wykrywane twarze i emocje.
+
+    Returns:
+        None
+
+    Działanie:
+        - Dla każdego obrazu w liście wykrywa twarze za pomocą funkcji detect_face.
+        - Jeśli twarze są wykryte, wykrywa emocje na obrazie za pomocą funkcji detect_emotion.
+        - Wypisuje na standardowe wyjście dominującą emocję oraz wyniki dla wszystkich wykrytych emocji.
+        - Jeśli nie wykryto twarzy lub emocji, wypisuje odpowiedni komunikat.
+
+    Przykład:
+        >>> image_list = [image1, image2, image3]
+        >>> process_images(image_list)
+        Image 0: Dominant Emotion detected - happy, Emotion Scores: {'angry': 0.01, 'disgust': 0.0, 'fear': 0.02, 'happy': 0.95, 'sad': 0.01, 'surprise': 0.01, 'neutral': 0.0}
+        Image 1: No face detected.
+        Image 2: No emotion detected.
+    """
     for idx, image in enumerate(image_list):
-        faces = detect_face(image)  # Detect faces in the image
+        faces = detect_face(image)
         
-        if len(faces) > 0:  # If faces are detected
-            dominant_emotion, emotion_scores = detect_emotion(image)  # Detect emotion in the image
+        if len(faces) > 0:
+            dominant_emotion, emotion_scores = detect_emotion(image)
             if dominant_emotion and emotion_scores:
                 print(f"Image {idx}: Dominant Emotion detected - {dominant_emotion}, "
                       f"Emotion Scores: {emotion_scores}")
@@ -80,29 +115,23 @@ def process_images(image_list):
             print(f"Image {idx}: No face detected.")
 
 if __name__ == "__main__":
-    # Argument parser to choose between video mode and image mode
+
     parser = argparse.ArgumentParser(description="Detect faces and emotions in video or list of images.")
     parser.add_argument("--mode", choices=['video', 'images'], required=True, help="Mode of operation: 'video' or 'images'")
     parser.add_argument("--video_path", type=str, help="Path to the video file (for video mode)")
     parser.add_argument("--image_list_path", type=str, help="Path to the serialized list of images (for images mode, must be a .pkl file)")
-
     args = parser.parse_args()
 
-    # Process video if mode is 'video'
     if args.mode == 'video':
         if args.video_path:
             process_video(args.video_path)
         else:
             print("Error: --video_path is required when mode is 'video'")
-
-    # Process image list if mode is 'images'
     elif args.mode == 'images':
         if args.image_list_path:
-            # Load the serialized NumPy array list (stored in a .pkl file)
             with open(args.image_list_path, 'rb') as f:
                 image_list = pickle.load(f)
 
-            # Check if the loaded object is a list of NumPy arrays
             if isinstance(image_list, list) and all(isinstance(img, np.ndarray) for img in image_list):
                 process_images(image_list)
             else:
