@@ -25,6 +25,7 @@ P-Grade to narzędzie pozwalające uzyskać rzetelną ocenę na temat wystąpien
 Aby urchomić program, użyj następującej komendy:
 ```sh
 python -m streamlit app/main.py
+```
 
 ## Domena
 Z uwagi na czas potrzebny do zarejestrowania domeny strona z aplikacją (bobr.ovh) może być niedostępna przez najbliższe kilka godzin. W celu uzyskania dostępu do aplikacji sprawdź link (bobr.ovh) jeśli nie działą dowód istnienia domeny w Docer compose
