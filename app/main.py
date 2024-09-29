@@ -47,12 +47,12 @@ def main():
                 "Ilośc słów": len(words),
                 "Średnia przerwa między słowami": average_break,
                 "Najdłuższa przerwa między słowami": longest_break, 
-                "Analiza sentymentu": text_json.hate_speech_detection,
-                "Indeks Gunning Fog": text_json.gfi_value,
-                "Poziom słuchacza": text_json.reading_level,
-                "Prędkośc (WPM)": audio_json.pace,
-                "Głośność": audio_json.loudness,
-                "Całkowity czas przerw": audio_json.pause_time,
+                # "Analiza sentymentu": text_json.hate_speech_detection,
+                # "Indeks Gunning Fog": text_json.gfi_value,
+                # "Poziom słuchacza": text_json.reading_level,
+                # "Prędkośc (WPM)": audio_json.pace,
+                # "Głośność": audio_json.loudness,
+                # "Całkowity czas przerw": audio_json.pause_time,
                 "Podobieństwo wypowiedzi i napisów (Lev)": lev_similarity,
                 "Podobieństwo wypowiedzi i napisów (Cos)": cos_similarity
             }

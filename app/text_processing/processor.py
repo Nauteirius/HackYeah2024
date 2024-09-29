@@ -170,16 +170,20 @@ def detect_hate_speech(doc):
     detected_hate_speech = [lemma for lemma in lemmas if any(keyword in lemma for keyword in hate_speech_keywords)]
 
     # If hate speech is detected, return the list of offensive lemmas
-    if detected_hate_speech:
-        return {
-            "Hate Speech Detected": True,
-            "Potentially Offensive Words": detected_hate_speech
-        }
-    else:
-        return {
-            "Hate Speech Detected": False,
-            "Potentially Offensive Words": []
-        }
+    # if detected_hate_speech:
+    #     return {
+    #         "Hate Speech Detected": True,
+    #         "Potentially Offensive Words": detected_hate_speech
+    #     }
+    # else:
+    #     return {
+    #         "Hate Speech Detected": False,
+    #         "Potentially Offensive Words": []
+    #     }
+    # if detect_hate_speech:
+    #     return True, detected_hate_speech
+    # else:
+
 
 def text_analyzer(text):
     '''Main function to process text and write results to output file'''
