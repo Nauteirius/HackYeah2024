@@ -2,7 +2,7 @@ from openai import OpenAI
 import typing
 import re
 
-from app.text_processing.speech_to_text import API_KEY
+import app.text_processing.openai_client as openai_client
 
 def split_numbered_list(text: str) -> list[str]:
     # Split the text on newlines and numbered points
@@ -12,8 +12,7 @@ def split_numbered_list(text: str) -> list[str]:
     return items
 
 def call_openai_api(system_content: str, user_content: str) -> str:
-    client = OpenAI(api_key=API_KEY)
-    completion = client.chat.completions.create(
+    completion = openai_client.instance.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": system_content},
