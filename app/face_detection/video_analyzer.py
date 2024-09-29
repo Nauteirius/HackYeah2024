@@ -274,6 +274,7 @@ def process_images(image_list,fps):
 
     # Print the structured JSON output
     print(json.dumps(json_output, indent=4))
+    return json_output
 
 if __name__ == "__main__":
     # Argument parser to choose between video mode and image mode
