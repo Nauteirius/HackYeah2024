@@ -28,11 +28,11 @@ def count_tokens(tokens):
     '''Count the number of tokens'''
     return len(tokens)
 
-def extract_keywords(text):
-    '''Extract keywords from text using YAKE'''
-    kw_extractor = yake.KeywordExtractor(lan="pl", n=1, top=10)  # Extract top 10 keywords in Polish
-    keywords = kw_extractor.extract_keywords(text.lower())
-    return {kw: score for kw, score in keywords}
+# def extract_keywords(text):
+#     '''Extract keywords from text using YAKE'''
+#     kw_extractor = yake.KeywordExtractor(lan="pl", n=1, top=10)  # Extract top 10 keywords in Polish
+#     keywords = kw_extractor.extract_keywords(text.lower())
+#     return {kw: score for kw, score in keywords}
 
 def create_stanza_object(text):
     '''Create Stanza doc to be processed further'''
@@ -121,7 +121,6 @@ def text_analyzer(text):
     sentence_count = count_sentences(doc)
     sentence_lengths = get_sentence_lengths(doc)
     pos_count = count_pos(doc)
-    keywords = extract_keywords(text)
     gfi_value, reading_level, complex_words = gunning_fog_index(tokens, doc)
     non_polish_words = detect_non_polish_and_slang(tokens)
 
@@ -132,7 +131,6 @@ def text_analyzer(text):
         "Sentence Lengths": sentence_lengths,
         "Complex Words": complex_words,
         "POS Count": pos_count,
-        "Keywords": keywords,
         "Gunning Fog Index": gfi_value,
         "Reading Level": reading_level,
         "Non-Polish/Slang Words": non_polish_words
