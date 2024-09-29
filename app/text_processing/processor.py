@@ -2,6 +2,7 @@ import nltk
 import yake
 import stanza
 import json
+import nltk
 from collections import Counter
 from nltk.corpus import stopwords, words
 from nltk import word_tokenize
@@ -10,6 +11,7 @@ import re
 
 # Download necessary NLTK resources
 nltk.download('punkt')
+nltk.download('punkt_tab')
 nltk.download('stopwords')
 nltk.download('words')
 
@@ -151,6 +153,34 @@ def analyze_word_breaks(words):
 
     return average_break, longest_break, longest_break_start
 
+def detect_hate_speech(doc):
+    '''Detect hate speech in a tokenized string using predefined hate speech lemmas'''
+    
+    # Lemmas commonly found in hate speech
+    hate_speech_keywords = [
+        "nienawidz", "głupi", "głupek", "głupk", "idiot", "kretyn", "kretyń", "debil", "rasist", "seksist",
+        "homofob", "zdrajc", "śmieć", "zabij", "zabić", "nazi", "terroryst",
+        "pedofil", "bandyt", "gwałciciel", "brudas", "morderc", "kanali"
+    ]
+    
+    # Extract lemmas from the Stanza document
+    lemmas = [word.lemma for sentence in doc.sentences for word in sentence.words]
+
+    # Check if any lemma contains one of the hate speech keywords (even as a part of the lemma)
+    detected_hate_speech = [lemma for lemma in lemmas if any(keyword in lemma for keyword in hate_speech_keywords)]
+
+    # If hate speech is detected, return the list of offensive lemmas
+    if detected_hate_speech:
+        return {
+            "Hate Speech Detected": True,
+            "Potentially Offensive Words": detected_hate_speech
+        }
+    else:
+        return {
+            "Hate Speech Detected": False,
+            "Potentially Offensive Words": []
+        }
+
 def text_analyzer(text):
     '''Main function to process text and write results to output file'''
 
@@ -170,6 +200,7 @@ def text_analyzer(text):
     non_polish_words = detect_non_polish_and_slang(tokens)
     pause_words = detect_pause_words(tokens)
     repeated_words = get_repeated_words(tokens)
+    hate_speech_detection = detect_hate_speech(doc)
 
     # Prepare the result dictionary
     results = {
@@ -182,7 +213,8 @@ def text_analyzer(text):
         "Reading Level": reading_level,
         "Non-Polish/Slang Words": non_polish_words,
         "Pause Words": pause_words,
-        "Repeated Words": repeated_words
+        "Repeated Words": repeated_words,
+        "Sentiment Analysis": hate_speech_detection
     }
 
     return results
