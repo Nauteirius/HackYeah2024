@@ -20,8 +20,9 @@ def tokenize_text(text):
 
 def complex_words_count(tokens):
     '''Count the number of complex words defined as words containing 9 or more characters'''
-    long_token_count = sum(1 for token in tokens if len(token) >= 9)
-    return long_token_count
+    complex_words = [token for token in tokens if len(token) >= 9]
+    long_token_count = len(complex_words)
+    return long_token_count, complex_words
 
 def count_tokens(tokens):
     '''Count the number of tokens'''
@@ -44,6 +45,11 @@ def count_sentences(doc):
     '''Count the number of sentences in the Stanza doc'''
     return len(doc.sentences)
 
+def get_sentence_lengths(doc):
+    '''Return a list of sentence lengths from the Stanza doc'''
+    return [len(sentence.words) for sentence in doc.sentences]
+
+
 def count_pos(doc):
     '''Count parts of speech in a Stanza document'''
     pos_counts = Counter([word.upos for sentence in doc.sentences for word in sentence.words])
@@ -54,14 +60,14 @@ def gunning_fog_index(tokens, doc):
     
     # Calculate counts
     total_words = count_tokens(tokens)
-    complex_words = complex_words_count(tokens)
+    complex_word_count, complex_word_list = complex_words_count(tokens)
     total_sentences = count_sentences(doc)
     
     if total_sentences == 0 or total_words == 0:
         return 0, "Insufficient data for calculation"
     
     # Calculate Gunning Fog Index
-    gfi = 0.4 * ((total_words / total_sentences) + (100 * (complex_words / total_words)))
+    gfi = 0.4 * ((total_words / total_sentences) + (100 * (complex_word_count / total_words)))
 
     if gfi < 6:
         reading_level = "5th Grade and below"
@@ -74,7 +80,7 @@ def gunning_fog_index(tokens, doc):
     else:
         reading_level = "College Level and above" #maybe this indicates jargon?
 
-    return gfi, reading_level
+    return gfi, reading_level, complex_word_list
 
 def detect_non_polish_and_slang(tokens):
     '''Detect potential slang, jargon, or non-Polish words'''
@@ -113,15 +119,18 @@ def text_analyzer(text):
     # Extract information
     token_count = count_tokens(tokens)
     sentence_count = count_sentences(doc)
+    sentence_lengths = get_sentence_lengths(doc)
     pos_count = count_pos(doc)
     keywords = extract_keywords(text)
-    gfi_value, reading_level = gunning_fog_index(tokens, doc)
+    gfi_value, reading_level, complex_words = gunning_fog_index(tokens, doc)
     non_polish_words = detect_non_polish_and_slang(tokens)
 
     # Prepare the result dictionary
     results = {
         "Token Count": token_count,
         "Sentence Count": sentence_count,
+        "Sentence Lengths": sentence_lengths,
+        "Complex Words": complex_words,
         "POS Count": pos_count,
         "Keywords": keywords,
         "Gunning Fog Index": gfi_value,
