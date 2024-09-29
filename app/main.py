@@ -4,6 +4,7 @@ import app.upload_pipeline.split_data as split_data
 import app.text_processing.speech_to_text as speech_to_text
 from app.text_processing.llm_analyzer import llm_output
 from app.text_processing.processor import text_analyzer
+import app.face_detection.video_analyzer as video_analyzer
 
 
 def main():
@@ -30,6 +31,7 @@ def main():
         print("Full Text:\n", text)
 
         print("Individual Words:")
+        video_analyzer_output = video_analyzer.process_images(audio_video.frames,audio_video.fps)
         for word in words:
             print(word)
 
