@@ -6,7 +6,8 @@ from app.text_processing.llm_analyzer import llm_output
 from app.text_processing.processor import text_analyzer, analyze_word_breaks
 import app.face_detection.video_analyzer as video_analyzer
 from app.voice_recognition.audio_analyser import analyze_audio
-
+import app.text_processing.text_comparator as text_comparator
+import app.face_detection.subtitles_extractor as subtitles_extractor
 
 def main():
     uploaded_file = st.file_uploader("Wybierz plik formatu mp4", type=["mp4"])
@@ -21,6 +22,9 @@ def main():
 
         audio_video = split_data.split(uploaded_file)
         text, words = speech_to_text.annotate(audio_video)
+        subtitle = subtitles_extractor(audio_video.frames)
+        lev_similarity, cos_similarity = text_comparator.compare_subtitles_and_transcriptions(subtitle,text)
+        print("lev_similarity: ",lev_similarity, " cos_similarity: ",cos_similarity)
 
         # text processors
         false_words, questions, tags, text_summary = llm_output(text)
