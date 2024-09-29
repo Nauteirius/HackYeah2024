@@ -25,7 +25,7 @@ def call_openai_api(system_content: str, user_content: str) -> str:
 def generate_ten_questions(transcription: str) -> str:
     return call_openai_api(
         "Jesteś personalnym trenerem wypowiadania się publicznie",
-        f"{transcription}. Czy możesz zaproponować 10 pytań dotyczących tego tekstu?"
+        f"{transcription}. Czy możesz zaproponować 10 pytań dotyczących tego tekstu? zwróć je każdy w kolejnej linii w formacie np. 1. pytanie?"
     )
 
 def find_false_words(transcription: str) -> str:
@@ -37,7 +37,7 @@ def find_false_words(transcription: str) -> str:
 def generate_tags(transcription: str) -> str:
     return call_openai_api(
         "Jesteś personalnym trenerem wypowiadania się publicznie",
-        f"{transcription}. Wygeneruj pięć tagów opisujących ten tekst"
+        f"{transcription}. Wygeneruj pięć tagów opisujących ten tekst. zwróć je każdy w kolejnej linii w formacie np. 1. tag"
     )
 
 # TODO: secure the prompt injection
