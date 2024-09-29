@@ -10,7 +10,6 @@ fps=25
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 # Initialize Mediapipe hand detector
 mp_hands = mp.solutions.hands
-mp_face_mesh = mp.solutions.face_mesh
 hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5)
 
 # Function to detect faces in a frame
@@ -27,20 +26,6 @@ def detect_hand(frame):
     if results.multi_hand_landmarks:
         return True  # Return True if at least one hand is detected
     return False  # Return False if no hands are detected
-
-# Function to check if the face is looking at the camera
-def is_looking_at_camera(landmarks):
-    # Extract key landmarks for eyes and mouth
-    left_eye = landmarks[33]  # Example index for left eye
-    right_eye = landmarks[263]  # Example index for right eye
-    mouth = landmarks[61]  # Example index for mouth center
-
-    # Calculate the eye aspect ratio to determine if the face is frontal
-    eye_distance = np.linalg.norm(np.array(left_eye) - np.array(right_eye))
-    mouth_height = np.linalg.norm(np.array(mouth) - np.array([(left_eye[0] + right_eye[0]) / 2, left_eye[1]]))
-
-    # A simple heuristic: if the mouth is below the eye line and the distance between the eyes is reasonable
-    return mouth_height < (0.5 * eye_distance)
 
 # Function to detect emotions in a frame using DeepFace
 def detect_emotion(frame):
@@ -68,72 +53,55 @@ def process_video(video_path):
     results = {}
 
     # Loop through video frames
-    with mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, min_detection_confidence=0.5) as face_mesh:
-        while cap.isOpened():
-            ret, frame = cap.read()  # Read a frame
-            if not ret:
-                break
-            print(frame_number)
-            # Calculate timestamp in seconds for the current frame
-            timestamp = frame_number / fps
-            second = int(timestamp)  # Get the current second
+    while cap.isOpened():
+        ret, frame = cap.read()  # Read a frame
+        if not ret:
+            break
+        print(frame_number)
+        # Calculate timestamp in seconds for the current frame
+        timestamp = frame_number / fps
+        second = int(timestamp)  # Get the current second
 
-            faces = detect_face(frame)  # Detect faces in the current frame
-            hand_detected = detect_hand(frame)  # Detect hand in the current frame
+        faces = detect_face(frame)  # Detect faces in the current frame
+        hand_detected = detect_hand(frame)  # Detect hand in the current frame
 
-            # Initialize results for the current second if not already done
-            if second not in results:
-                results[second] = {
-                    "timestamp": timestamp,
-                    "face": {
-                        "visible_count": 0,  # Counter for frames with visible faces
-                        "emotion": np.zeros(7),  # Assuming 7 emotions; adjust as necessary
-                        "total_frames": 0,  # Total frames counted for this second
-                        "looking_at_camera_count": 0  # Count for frames looking at the camera
-                    },
-                    "body": {
-                        "gesture_count": 0 # Placeholder for body gesture detection
-                    },
-                    "environment": {
-                        "background_people_count": 0,  # Counter for frames with more than one face
-                    }
+        # Initialize results for the current second if not already done
+        if second not in results:
+            results[second] = {
+                "timestamp": timestamp,
+                "face": {
+                    "visible_count": 0,  # Counter for frames with visible faces
+                    "emotion": np.zeros(7),  # Assuming 7 emotions; adjust as necessary
+                    "total_frames": 0  # Total frames counted for this second
+                },
+                "body": {
+                    "gesture_count": 0 # Placeholder for body gesture detection
+                },
+                "environment": {
+                    "background_people_count": 0,  # Counter for frames with more than one face
                 }
+            }
 
-            # Increment total frames for this second
-            results[second]["face"]["total_frames"] += 1
+        # Increment total frames for this second
+        results[second]["face"]["total_frames"] += 1
 
-            if len(faces) > 0:  # If faces are detected
-                results[second]["face"]["visible_count"] += 1  # Increment visible count
+        if len(faces) > 0:  # If faces are detected
+            results[second]["face"]["visible_count"] += 1  # Increment visible count
 
+            # Detect emotion in the frame
+            emotion_scores = detect_emotion(frame)
 
-                # Detect emotion in the frame
-                emotion_scores = detect_emotion(frame)
-
-                # If emotion scores are detected, accumulate them
-                if emotion_scores:
-                    results[second]["face"]["emotion"] += np.array(list(emotion_scores.values()))  # Accumulate emotion scores
-                
-                # If more than one face is detected, increment background people count
-                if len(faces) > 1:
-                    results[second]["environment"]["background_people_count"] += 1
-
-                
-                # Process face mesh for landmark detection
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                results_mesh = face_mesh.process(frame_rgb)
-
-                if results_mesh.multi_face_landmarks:
-                    for face_landmarks in results_mesh.multi_face_landmarks:
-                        landmarks = [(lm.x * frame.shape[1], lm.y * frame.shape[0]) for lm in face_landmarks.landmark]
-
-                        # Check if looking at the camera
-                        if is_looking_at_camera(landmarks):
-                            print("looking at camera")
-                            results[second]["face"]["looking_at_camera_count"] += 1
-                    # If hand is detected, increment gesture count
-            if hand_detected:
-                results[second]["body"]["gesture_count"] += 1
-            frame_number += 1
+            # If emotion scores are detected, accumulate them
+            if emotion_scores:
+                results[second]["face"]["emotion"] += np.array(list(emotion_scores.values()))  # Accumulate emotion scores
+            
+            # If more than one face is detected, increment background people count
+            if len(faces) > 1:
+                results[second]["environment"]["background_people_count"] += 1
+                # If hand is detected, increment gesture count
+        if hand_detected:
+            results[second]["body"]["gesture_count"] += 1
+        frame_number += 1
 
     # After processing all frames, determine visibility and background presence for each second
     for second, data in results.items():
@@ -149,7 +117,6 @@ def process_video(video_path):
 
         # Determine if gestures were present (hand detected in majority of frames)
         data["body"]["gesture"] = data["body"]["gesture_count"] > (data["face"]["total_frames"] / 2)
-        data["face"]["looking_at_camera"] = data["face"]["looking_at_camera_count"] > (data["face"]["total_frames"] / 2)
 
     # Convert results to the desired JSON format
     json_output = []
@@ -158,8 +125,7 @@ def process_video(video_path):
             "timestamp": data["timestamp"],
             "face": {
                 "visible": data["face"].get("visible", False),  # Use the computed visibility
-                "emotion": data["face"]["emotion"].tolist(),  # Convert numpy array to list for JSON serialization
-                "looking_at_camera": data["face"]["looking_at_camera"],  # Include looking_at_camera in output
+                "emotion": data["face"]["emotion"].tolist()  # Convert numpy array to list for JSON serialization
             },
             "body": {
                 "gesture": data["body"]["gesture"]
@@ -176,10 +142,9 @@ def process_video(video_path):
     cap.release()
 
 # Function to process a list of images and detect faces and emotions
-def process_images(image_list,fps):
+def process_images(image_list):
     # Data structure to store results
     results = {}
-    #fps = 25  # Assuming a constant frame rate
 
     for idx, image in enumerate(image_list):
         # Calculate the current second based on the index (assuming each image represents one frame)
@@ -195,8 +160,7 @@ def process_images(image_list,fps):
                 "face": {
                     "visible_count": 0,  # Counter for images with visible faces
                     "emotion": np.zeros(7),  # Assuming 7 emotions; adjust as necessary
-                    "total_frames": 0,  # Total images counted for this second
-                    "looking_at_camera_count": 0  # Count for frames looking at the camera
+                    "total_frames": 0  # Total images counted for this second
                 },
                 "body": {
                     "gesture_count": 0 # Placeholder for body gesture detection
@@ -222,23 +186,8 @@ def process_images(image_list,fps):
             # If more than one face is detected, increment background people count
             if len(faces) > 1:
                 results[second]["environment"]["background_people_count"] += 1
-
-            # Process face mesh for landmark detection
-            frame_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            with mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, min_detection_confidence=0.5) as face_mesh:
-                results_mesh = face_mesh.process(frame_rgb)
-
-                if results_mesh.multi_face_landmarks:
-                    for face_landmarks in results_mesh.multi_face_landmarks:
-                        landmarks = [(lm.x * image.shape[1], lm.y * image.shape[0]) for lm in face_landmarks.landmark]
-
-                        # Check if looking at the camera
-                        if is_looking_at_camera(landmarks):
-                            results[second]["face"]["looking_at_camera_count"] += 1
-
         if hand_detected:
             results[second]["body"]["gesture_count"] += 1
-
     # After processing all images, determine visibility and background presence for each second
     for second, data in results.items():
         # Determine if faces were visible in the majority of images
@@ -261,8 +210,7 @@ def process_images(image_list,fps):
             "timestamp": data["timestamp"],
             "face": {
                 "visible": data["face"].get("visible", False),  # Use the computed visibility
-                "emotion": data["face"]["emotion"].tolist(),  # Convert numpy array to list for JSON serialization
-                "looking_at_camera": data["face"]["looking_at_camera_count"] > (data["face"]["total_frames"] / 2),  # Include looking_at_camera in output
+                "emotion": data["face"]["emotion"].tolist()  # Convert numpy array to list for JSON serialization
             },
             "body": {
                 "gesture": data["body"]["gesture"]

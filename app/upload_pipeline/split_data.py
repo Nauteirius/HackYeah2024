@@ -34,18 +34,18 @@ def split(video_bytes: io.BytesIO) -> AudioVideo:
             .run(capture_stdout=True)
         )
         frames_4d = np.frombuffer(out, np.uint8).reshape([-1, height, width, 3])
+        frames = [
+            arr.squeeze(0) for arr in np.split(frames_4d, frames_4d.shape[0], axis=0)
+        ]
+
         out, _ = (
             ffmpeg.input(file_name)
-            .audio.output("pipe:", format="mp3", acodec="libmp3lame")
+            .audio.output('pipe:', format='mp3', acodec='libmp3lame')
             .run(capture_stdout=True)
         )
 
         mp3_bytes = io.BytesIO()
         mp3_bytes.write(out)
         mp3_bytes.seek(0)
-
-        frames = [
-            arr.squeeze(0) for arr in np.split(frames_4d, frames_4d.shape[0], axis=0)
-        ]
 
     return AudioVideo(fps, width, height, frames, mp3_bytes)
