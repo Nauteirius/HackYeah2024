@@ -23,7 +23,7 @@ def main():
         text, words = speech_to_text.annotate(audio_video)
 
         # text processors
-        false_words, questions, tags = llm_output(text)
+        false_words, questions, tags, text_summary = llm_output(text)
         text_json = text_analyzer(text)
         st.json(text_json)
         average_break, longest_break, longest_break_start = analyze_word_breaks(words)
@@ -61,6 +61,12 @@ def main():
 
         print("Individual Words:")
         video_analyzer_output = video_analyzer.process_images(audio_video.frames,audio_video.fps)
+        st.json(video_analyzer_output)
+        for word in words:
+            print(word)
+
+        print("Summary of the text:")
+        video_analyzer_output = video_analyzer.process_images(audio_video.frames, audio_video.fps)
         st.json(video_analyzer_output)
         for word in words:
             print(word)
