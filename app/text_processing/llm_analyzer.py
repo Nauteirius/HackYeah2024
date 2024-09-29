@@ -1,8 +1,15 @@
 from openai import OpenAI
 import typing
+import re
 
 from app.text_processing.speech_to_text import API_KEY
 
+def split_numbered_list(text: str) -> list[str]:
+    # Split the text on newlines and numbered points
+    items = re.split(r'\n\d+\.\s*', text)
+    items = [item.strip() for item in items if item.strip()]
+    
+    return items
 
 def call_openai_api(system_content: str, user_content: str) -> str:
     client = OpenAI(api_key=API_KEY)
@@ -35,17 +42,12 @@ def generate_tags(transcription: str) -> str:
 
 # TODO: secure the prompt injection
 def llm_output(transcription):
-    
-    print("Testing generate_ten_questions:")
-    questions = generate_ten_questions(transcription)
-    print(questions)
-    print("\n" + "-"*50 + "\n")
-    
-    print("Testing find_false_words:")
+    questions_text = generate_ten_questions(transcription)
     false_words = find_false_words(transcription)
-    print(false_words)
-    print("\n" + "-"*50 + "\n")
-    
-    print("Testing generate_tags:")
-    tags = generate_tags(transcription)
-    print(tags)
+    tags_text = generate_tags(transcription)
+
+    questions = split_numbered_list(questions_text)
+    tags = split_numbered_list(tags_text)
+
+    return false_words, questions, tags
+
